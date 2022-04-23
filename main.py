@@ -12,7 +12,7 @@ def info():
 
 if __name__ == '__main__':
     # var for URL
-    url = "https://www.geeksforgeeks.org/python-programming-language/?ref=leftbar"
+    url = "https://github.com/sherelene/web_scraper"
 
     # initialization with
     article = Goose().extract(url)
