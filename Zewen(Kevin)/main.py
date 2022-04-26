@@ -7,7 +7,10 @@ import web_scraper
 import nltk
 from tkinter import *
 from newspaper import Article
-
+import tempfile
+import urllib.request
+from PIL import Image
+import os
 
 HEIGHT = 700
 WIDTH = 800
@@ -31,6 +34,7 @@ def download_article():
     forget_main_frame()
 
     default_url = "https://www.cnn.com/2022/04/26/investing/markets-plunge-tech-down/index.html"
+
 
     search_box_frame = tk.Frame(root)
     search_box_frame.place(relx=0.5, rely=0.2, relwidth=0.8, relheight=0.5, anchor='n')
@@ -94,23 +98,44 @@ def display_article(url):
     T.insert(tk.END, summ)
 
 
-    download_image(multi_images)
+    download_image(multi_images) #downloads all images found in article
+
 
 
 def download_image(images):
-    import urllib.request
-    cnt = 1
+
+    #creates new folder for temp use
+    newpath = r'C:\Users\shere\OneDrive\Documents\CPP\SP2022\CS2520\group\Zewen(Kevin)\temp'
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+
+    cnt = 1 #keeps image names unique
+
+    #changes directory to temp folder
+    os.chdir(newpath)
+
+    #saves all images in temp folder
     for image in images:
         saved_filename = "0000000" + str(cnt) + ".jpg"
         urllib.request.urlretrieve(image, saved_filename)
         cnt = cnt + 1
         show_image(saved_filename)
 
+        # deletes image
+        delete_file(saved_filename)
+
+
 
 def show_image(path):
     from PIL import Image
     im = Image.open(path)
     im.show()
+
+
+
+def delete_file(file_path):
+    # deletes image
+    os.remove(file_path)
 
 #---------------------------------------------------END ARTICLE-----------------------------------------#
 
