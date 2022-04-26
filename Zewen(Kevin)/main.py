@@ -1,6 +1,13 @@
 # Zewen Lin
 import tkinter as tk
+
+import bs4
+import time
 import web_scraper
+import nltk
+from tkinter import *
+from newspaper import Article
+
 
 HEIGHT = 700
 WIDTH = 800
@@ -19,11 +26,95 @@ def website_info():
     forget_main_frame()
 
 
-def download_pic():
+#-------------------------------------ARTICLE STUFF----------------------------------------------------------#
+def download_article():
     forget_main_frame()
 
+    default_url = "https://www.cnn.com/2022/04/26/investing/markets-plunge-tech-down/index.html"
 
-# job searching
+    search_box_frame = tk.Frame(root)
+    search_box_frame.place(relx=0.5, rely=0.2, relwidth=0.8, relheight=0.5, anchor='n')
+
+    # display website url label
+    url_label = tk.Label(search_box_frame, text="URL:", font=('Courier', 18))
+    url_label.place(relx=0.1, rely=0.3, relwidth=0.2, relheight=0.2)
+
+    # display website url input box
+    url_box = tk.Entry(search_box_frame, font=('Courier', 18))
+    url_box.insert(-1, default_url)
+    url_box.place(relx=0.3, rely=0.3, relwidth=0.5, relheight=0.2)
+
+
+    # display search button
+    button_search = tk.Button(search_box_frame, text="Search", font=('Courier', 18),
+                              command=lambda: [url_label.place_forget(), url_box.place_forget(),
+                                               button_search.place_forget(), search_box_frame.place_forget(),
+                                               display_article(url_box.get())])
+    button_search.place(relx=0.38, rely=0.75, relheight=0.2, relwidth=0.2)
+
+
+def display_article(url):
+
+    article = Article(url)
+
+    # Do some NLP
+    article.download()  # Downloads the link’s HTML content
+    article.parse()  # Parse the article
+    nltk.download('punkt')  # 1 time download of the sentence tokenizer
+    article.nlp()  # Keyword extraction wrapper
+
+    display_job_frame = tk.Frame(root)
+    display_job_frame.place(relx=0.2, rely=0.05, relwidth=0.9, relheight=0.9)
+
+    authors = ",".join(article.authors)
+    date = article.publish_date
+    text = article.text
+    title = article.title
+    summ = article.summary.replace('\n', ' ').replace(u'\u2019',"\'")
+    meta = article.meta_description
+    image = article.top_image
+    multi_images = article.images
+    print(multi_images)
+
+    S = tk.Scrollbar(display_job_frame, orient=VERTICAL)
+    T = tk.Text(display_job_frame, height=40, width=80, yscrollcommand=S.set, font=("Helvetica", 15))
+    S.pack(side=tk.RIGHT, fill=tk.Y)
+    T.pack(side=tk.LEFT, fill=tk.Y)
+    S.config(command=T.yview)
+    T.config(yscrollcommand=S.set)
+    T.insert(tk.END, "Author(s): ")
+    T.insert(tk.END, authors)
+    T.insert(tk.END, "\nDate Published: \n")
+    T.insert(tk.END, date)
+    T.insert(tk.END, "\n\nArticle Name: \n")
+    T.insert(tk.END, title)
+    T.insert(tk.END, "\n\nArticle sypnosis:\n")
+    T.insert(tk.END, meta)
+    T.insert(tk.END, "\n\nArticle summary:\n")
+    T.insert(tk.END, summ)
+
+
+    download_image(multi_images)
+
+
+def download_image(images):
+    import urllib.request
+    cnt = 1
+    for image in images:
+        saved_filename = "0000000" + str(cnt) + ".jpg"
+        urllib.request.urlretrieve(image, saved_filename)
+        cnt = cnt + 1
+        show_image(saved_filename)
+
+
+def show_image(path):
+    from PIL import Image
+    im = Image.open(path)
+    im.show()
+
+#---------------------------------------------------END ARTICLE-----------------------------------------#
+
+
 def search_job():
     forget_main_frame()
 
@@ -96,11 +187,13 @@ frame.place(relx=0.45, rely=0.25, relwidth=0.75, relheight=0.8, anchor='n')
 
 button_1 = tk.Button(frame, text="Website Info", font=('Courier', 18), command=lambda: website_info())
 button_1.place(relx=0.15, rely=0, relheight=0.2, relwidth=0.35)
-button_2 = tk.Button(frame, text="Download Picture", font=('Courier', 18), command=lambda: download_pic())
+button_2 = tk.Button(frame, text="Article Search", font=('Courier', 18), command=lambda: download_article())
 button_2.place(relx=0.6, rely=0, relheight=0.2, relwidth=0.35)
 button_3 = tk.Button(frame, text="In Stock Alert", font=('Courier', 18), command=lambda: in_stock_alert())
 button_3.place(relx=0.15, rely=0.3, relheight=0.2, relwidth=0.35)
 button_4 = tk.Button(frame, text="Search Job", font=('Courier', 18), command=lambda: search_job())
 button_4.place(relx=0.6, rely=0.3, relheight=0.2, relwidth=0.35)
 
+
 root.mainloop()
+
