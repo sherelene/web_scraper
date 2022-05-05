@@ -20,8 +20,6 @@ WIDTH = 800
 def forget_main_frame():
     button_1.place_forget()
     button_2.place_forget()
-    button_3.place_forget()
-    button_4.place_forget()
     frame.place_forget()
 
 
@@ -105,7 +103,7 @@ def display_article(url):
 def download_image(images):
 
     #creates new folder for temp use
-    newpath = r'C:\Users\shere\OneDrive\Documents\CPP\SP2022\CS2520\group\Zewen(Kevin)\temp'
+    newpath = os.getcwd() + "\\temp"
     if not os.path.exists(newpath):
         os.makedirs(newpath)
 
@@ -210,14 +208,15 @@ canvas.pack()
 frame = tk.Frame(root)
 frame.place(relx=0.45, rely=0.25, relwidth=0.75, relheight=0.8, anchor='n')
 
-button_1 = tk.Button(frame, text="Website Info", font=('Courier', 18), command=lambda: website_info())
-button_1.place(relx=0.15, rely=0, relheight=0.2, relwidth=0.35)
-button_2 = tk.Button(frame, text="Article Search", font=('Courier', 18), command=lambda: download_article())
-button_2.place(relx=0.6, rely=0, relheight=0.2, relwidth=0.35)
-button_3 = tk.Button(frame, text="In Stock Alert", font=('Courier', 18), command=lambda: in_stock_alert())
-button_3.place(relx=0.15, rely=0.3, relheight=0.2, relwidth=0.35)
-button_4 = tk.Button(frame, text="Search Job", font=('Courier', 18), command=lambda: search_job())
-button_4.place(relx=0.6, rely=0.3, relheight=0.2, relwidth=0.35)
+title = Label(root, text="Web Scraper", font=('Courier', 17))
+title.place(relx=0.5, rely=0.05, anchor=CENTER)
+description = Label(root, text="Built to make article-viewing and job-searching more accessible.", font=('Courier', 13))
+description.place(relx=0.5, rely=0.1, anchor=CENTER)
+
+button_1 = tk.Button(frame, text="Article Search", font=('Courier', 17), command=lambda: download_article())
+button_1.place(relx=0.15, rely=0.25, relheight=0.2, relwidth=0.35)
+button_2 = tk.Button(frame, text="Job Search", font=('Courier', 17), command=lambda: search_job())
+button_2.place(relx=0.6, rely=0.25, relheight=0.2, relwidth=0.35)
 
 
 root.mainloop()
