@@ -1,31 +1,48 @@
+# Group Project: Web Scraper
 # Zewen Lin
 import os
+import textwrap
+import time
 from tkinter import *
 import tkinter as tk
 import urllib
 import webbrowser
 import nltk
+from PIL import Image, ImageTk
+from lxml.html.builder import FONT
 from newspaper import Article
+from selenium import webdriver as wd
 import web_scraper
 import price_tracker
-import textwrap
-
+import instock_alert
+# import tkHyperlinkManager
 from gtts import gTTS
-from PIL import Image, ImageTk
+
+from dictionary import dictionary
+from tkinter import ttk
 
 HEIGHT = 600
 WIDTH = 800
-FONT = "Helvetica"
 
 
-# remove the main page(containing 4 buttons) and the previous frames after clicking the back button
-def forget_main_frame(button_1, button_2, button_3, button_4, display_job_frame):
-    button_1.grid_forget()
-    button_2.grid_forget()
-    button_3.grid_forget()
-    button_4.grid_forget()
-    display_job_frame.grid_forget()
+# remove the main page(containing 4 buttons)
+def forget_main_frame():
+    button_1.grid_remove()
+    button_2.grid_remove()
+    button_3.grid_remove()
+    button_4.grid_remove()
+    button_5.grid_remove()
+    button_6.grid_remove()
 
+
+# display the main page
+def back_main_frame():
+    button_1.grid()
+    button_2.grid()
+    button_3.grid()
+    button_4.grid()
+    button_5.grid()
+    button_6.grid()
 
 
 # text to speech function.
@@ -34,30 +51,29 @@ def text_to_speech(text):
     language = 'en'
     speech = gTTS(text=text, lang=language, slow=False)
     speech.save("text.mp3")
-    os.system("start text.mp3")
+    os.system("afplay text.mp3 -t 10")
 
 
 # -------------------------------------ARTICLE STUFF----------------------------------------------------------#
-
-def download_article(button1, button2, button3, button4, display_job_frame):
-    forget_main_frame(button1, button2, button3, button4, display_job_frame)
-
+def download_article():
+    forget_main_frame()
     default_url = "https://www.cnn.com/2022/04/26/investing/markets-plunge-tech-down/index.html"
 
     search_box_frame = tk.Frame(root)
     search_box_frame.place(relx=0.5, rely=0.2, relwidth=0.8, relheight=0.5, anchor='n')
 
     # display website url label
-    url_label = tk.Label(search_box_frame, text="ENTER URL:", font=('Helvetica', 22))
+    url_label = tk.Label(search_box_frame, text="ENTER URL: ", font=('Helvetica', 18))
     url_label.place(relx=0.1, rely=0.3, relwidth=0.2, relheight=0.2)
 
     # display website url input box
     url_box = tk.Entry(search_box_frame, font=(FONT, 18))
     url_box.insert(-1, default_url)
-    url_box.place(relx=0.3, rely=0.3, relwidth=0.6, relheight=0.4)
+    url_box.place(relx=0.3, rely=0.3, relwidth=0.6, relheight=0.2)
 
     # display search button
-    button_search = tk.Button(search_box_frame, text="Search", font=(FONT, 18), bg="#3f3f3f", fg='white',
+    button_search = tk.Button(search_box_frame, text="Search", font=(FONT, 18),
+                              highlightbackground="#20bebe", fg="black",
                               command=lambda: [url_label.place_forget(), url_box.place_forget(),
                                                button_search.place_forget(), search_box_frame.place_forget(),
                                                display_article(url_box.get())])
@@ -66,7 +82,6 @@ def download_article(button1, button2, button3, button4, display_job_frame):
 
 def display_article(url):
     article = Article(url)
-
     # Do some NLP
     article.download()  # Downloads the link’s HTML content
     article.parse()  # Parse the article
@@ -118,24 +133,22 @@ def display_article(url):
     display_buttons = tk.Frame(root)
     display_buttons.place(relx=0.0, rely=0.05, relwidth=0.2, relheight=0.9)
 
-
     F1 = LabelFrame(display_buttons, text="Category", font=(
         "helvetica", 20, "bold"), bg=bg_color, fg=basic_font_color, bd=10, relief=GROOVE)
     F1.place(x=0, y=0, width=380, relheight=1)
-
 
     # button to read summary
     text_talk = tk.StringVar()
     text_talk.set("PLAY SUMMARY")
     b1 = tk.Button(F1, textvariable=text_talk, font=('Helvetica', 18), width=17, bd=7,
-                           highlightbackground="#20bebe", fg="black", command=lambda: text_to_speech(summ))
+                   highlightbackground="#20bebe", fg="black", command=lambda: text_to_speech(summ))
     b1.grid(row=1, column=0, padx=10, pady=5)
 
     # button to read article
     article_talk = tk.StringVar()
     article_talk.set("PLAY ARTICLE")
     b2 = tk.Button(F1, textvariable=article_talk, font=('Helvetica', 18), width=17, bd=7,
-                           highlightbackground="#20bebe", fg="black", command=lambda: text_to_speech(text))
+                   highlightbackground="#20bebe", fg="black", command=lambda: text_to_speech(text))
     b2.grid(row=2, column=0, padx=10, pady=5)
 
     # button to show top image
@@ -157,15 +170,15 @@ def display_article(url):
     back_button = tk.StringVar()
     back_button.set("BACK TO MAIN")
     bb = tk.Button(F1, textvariable=back_button, font=('Helvetica', 18), width=17, bd=7,
-                   highlightbackground="#20bebe", fg="black", command=lambda: return_main(root))
+                   highlightbackground="#20bebe", fg="black", command=lambda: [F1.destroy(),
+                                                                               display_job_frame.destroy(),
+                                                                               back_main_frame()])
     bb.grid(row=6, column=0, padx=10, pady=5)
 
 
 def display_image(image_file):
-
     display_job_frame = tk.Frame(root)
     display_job_frame.place(relx=0.2, rely=0.05, relwidth=0.9, relheight=0.9)
-
     load = Image.open(image_file)
     S = tk.Scrollbar(display_job_frame, orient=VERTICAL)
     render = ImageTk.PhotoImage(load)
@@ -173,10 +186,10 @@ def display_image(image_file):
     img.image = render
     img.place(relx=0.2, rely=0.05, relwidth=0.9, relheight=0.9)
 
+
 def display_summary(authors, date, title, meta, summ):
     display_job_frame = tk.Frame(root)
     display_job_frame.place(relx=0.2, rely=0.05, relwidth=0.9, relheight=0.9)
-
     S = tk.Scrollbar(display_job_frame, orient=VERTICAL)
     T = tk.Text(display_job_frame, height=40, width=80, yscrollcommand=S.set, font=("Helvetica", 20), wrap=WORD)
     S.pack(side=tk.RIGHT, fill=tk.Y)
@@ -197,7 +210,7 @@ def display_summary(authors, date, title, meta, summ):
 
 def download_image(images):
     # creates new folder for temp use
-    newpath = r'C:\Users\shere\OneDrive\Documents\CPP\SP2022\CS2520\projectVersions\temp'
+    newpath = r'temp'
     if not os.path.exists(newpath):
         os.makedirs(newpath)
 
@@ -206,16 +219,17 @@ def download_image(images):
     # changes directory to temp folder
     os.chdir(newpath)
 
-
     saved_filename = "0000000" + str(cnt) + ".jpg"
     urllib.request.urlretrieve(images, saved_filename)
 
     return saved_filename
 
+
 # function to show images on screen
 def show_image(path):
     im = Image.open(path)
     im.show()
+
 
 # function to delete image
 def delete_file(file_path):
@@ -227,71 +241,141 @@ def delete_file(file_path):
 
 
 # ---------------------------------------------------In Stock Alert-------------- -----------------------#
-def instock_alert():
-    return True
+def in_stock_alert():
+    forget_main_frame()
+    default_url = "https://www.amazon.com/s?k=rtx+3080&sprefix=rtx+%2Caps%2C173&ref=nb_sb_ss_ts-doa-p_1_4"
+    in_stock_alert_frame = tk.Frame(root)
+    in_stock_alert_frame.grid(row=1, column=1)
+
+    # display website url label
+    url_label = tk.Label(in_stock_alert_frame, text="URL:  ", font=('Railway', 16))
+    url_label.grid(row=1, column=1, sticky="NE", pady=20, padx=20)
+
+    # display website url input box
+    url_box = tk.Entry(in_stock_alert_frame, font=('Railway', 18), width=22)
+    url_box.insert(-1, default_url)
+    url_box.grid(row=1, column=2, sticky="NW", pady=20, padx=20)
+
+    # display zipcode label
+    zipcode_label = tk.Label(in_stock_alert_frame, text="ZipCode:  ", font=('Railway', 16))
+    zipcode_label.grid(row=2, column=1, sticky="NE", pady=20, padx=20)
+
+    # display zipcode input box
+    zipcode_box = tk.Entry(in_stock_alert_frame, font=('Railway', 18), width=22)
+    zipcode_box.grid(row=2, column=2, sticky="NW", pady=20, padx=20)
+
+    # display maxprice label
+    maxprice_label = tk.Label(in_stock_alert_frame, text="MaxPrice:  ", font=('Railway', 16))
+    maxprice_label.grid(row=3, column=1, sticky="NE", pady=20, padx=20)
+
+    # display maxprice input box
+    maxprice_box = tk.Entry(in_stock_alert_frame, font=('Railway', 18), width=22)
+    maxprice_box.grid(row=3, column=2, sticky="NW", pady=20, padx=20)
+
+    # display keyword label
+    keyword_label = tk.Label(in_stock_alert_frame, text="Keyword:  ", font=('Railway', 16))
+    keyword_label.grid(row=4, column=1, sticky="NE", pady=20, padx=20)
+
+    # display phoneNumber input box
+    keyword_box = tk.Entry(in_stock_alert_frame, font=('Railway', 18), width=22)
+    keyword_box.grid(row=4, column=2, sticky="NW", pady=20, padx=20)
+
+    # display phoneNumber label
+    phoneNum_label = tk.Label(in_stock_alert_frame, text="PhoneNo:  ", font=('Railway', 16))
+    phoneNum_label.grid(row=5, column=1, sticky="NE", pady=20, padx=20)
+
+    # display phoneNumber input box
+    phoneNum_box = tk.Entry(in_stock_alert_frame, font=('Railway', 18), width=22)
+    phoneNum_box.grid(row=5, column=2, sticky="NW", pady=20, padx=20)
+
+    start_text = tk.StringVar()
+    # display start button
+    button_start = tk.Button(in_stock_alert_frame, textvariable=start_text, font=('Railway', 16), height=3, width=14,
+                             highlightbackground="#20bebe", fg="black",
+                             command=lambda: [in_stock_alert_frame.grid_remove(),
+                                              start_instock_alert(zipcode_box.get(), maxprice_box.get(),
+                                                                  wd, phoneNum_box.get(), keyword_box.get(),
+                                                                  url_box.get())])
+    start_text.set("Start")
+    button_start.grid(row=6, column=2, sticky="NW", pady=20, padx=20)
+    back_button_pic = PhotoImage(file="pic/back.png").subsample(5, 5)
+    label_back = Label(image=back_button_pic)
+    label_back.image = back_button_pic  # keep a reference
+
+    button_back = tk.Button(in_stock_alert_frame, highlightthickness=0, bd=0, borderwidth=0,
+                            image=back_button_pic,
+                            command=lambda: [in_stock_alert_frame.destroy(), back_main_frame()])
+    button_back.grid(row=6, column=2, sticky="NE", pady=20, padx=20)
+
+
+def start_instock_alert(zipcode, maxPrice, webdriver, phoneNum, keyword, item_url):
+    alert_system_frame = tk.Frame(root)
+    alert_system_frame.grid(row=1, column=1)
+    searching_label = tk.Label(alert_system_frame, text="Searching....", font=('Railway', 30))
+    searching_label.grid(row=1, column=2, sticky="NE", pady=5)
+    time.sleep(3)
+    alert_system = instock_alert.InStockAlert(zipcode, float(maxPrice), webdriver, str(phoneNum), keyword, item_url)
+    alert_system.run()
 
 
 # ---------------------------------------------------END In Stock Alert----------------------------------#
 
 
 # ---------------------------------------------------Job Search--------------------------------- --------#
-def search_job(button1, button2, button3, button4, display_job_frame):
-    forget_main_frame(button1, button2, button3, button4, display_job_frame)
-
+def search_job():
+    forget_main_frame()
     default_url = "https://www.timesjobs.com/"
 
-    # canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
-    # canvas.grid(columnspan=4, rowspan=4)
-    # canvas.configure(highlightthickness=0)
-
     for i in range(5):
-        # root.columnconfigure(i, weight=1)
         root.rowconfigure(i, weight=1)
 
-    # search_box_frame = tk.Frame(root)
-    # search_box_frame.place(relx=0.5, rely=0.2, relwidth=0.8, relheight=0.5, anchor='n')
-
     # display website url label
-    url_label = tk.Label(root, text="URL:  ", font=(FONT, 22), bg="white")
+    url_label = tk.Label(root, text="URL:  ", font=('Railway', 16))
     url_label.grid(row=1, column=1, sticky="NE", pady=5)
-    # url_label.place(relx=0.1, rely=0.3, relwidth=0.2, relheight=0.2)
 
     # display website url input box
-    url_box = tk.Entry(root, font=(FONT, 24), width=33, bg="white")
+    url_box = tk.Entry(root, font=('Railway', 18), width=22)
     url_box.insert(-1, default_url)
     url_box.grid(row=1, column=2, sticky="NW")
-    # url_box.place(relx=0.3, rely=0.3, relwidth=0.5, relheight=0.2)
 
     # display category label
-    category_label = tk.Label(root, text="Category:  ", font=(FONT, 22), bg="white")
+    category_label = tk.Label(root, text="Category:  ", font=('Railway', 16))
     category_label.grid(row=2, column=1, sticky="NE", pady=5)
-    # category_label.place(relx=0.1, rely=0.55, relwidth=0.2, relheight=0.2)
 
     # display category input box
-    category_box = tk.Entry(root, font=(FONT, 24), width=33, bg="white")
+    category_box = tk.Entry(root, font=('Railway', 18), width=22)
     category_box.grid(row=2, column=2, sticky="NW")
-    # category_box.place(relx=0.3, rely=0.55, relwidth=0.5, relheight=0.2)
 
     # display location label
-    location_label = tk.Label(root, text="Location:  ", font=(FONT, 22), bg="white")
+    location_label = tk.Label(root, text="Location:  ", font=('Railway', 16))
     location_label.grid(row=3, column=1, sticky="NE", pady=5)
-    # category_label.place(relx=0.1, rely=0.55, relwidth=0.2, relheight=0.2)
 
     # display location input box
-    location_box = tk.Entry(root, font=(FONT, 24), width=33, bg="white")
+    location_box = tk.Entry(root, font=('Railway', 18), width=22)
     location_box.grid(row=3, column=2, sticky="NW")
 
     search_text = tk.StringVar()
     # display search button
-    button_search = tk.Button(root, textvariable=search_text, font=(FONT, 22), height=3, width=14,
+    button_search = tk.Button(root, textvariable=search_text, font=('Railway', 16), height=3, width=14,
                               highlightbackground="#20bebe", fg="black",
                               command=lambda: [url_label.grid_forget(), url_box.grid_forget(),
                                                category_label.grid_forget(), category_box.grid_forget(),
-                                               button_search.grid_forget(),
+                                               button_search.grid_forget(), location_label.grid_forget(),
+                                               location_box.grid_forget(), button_back.grid_remove(),
                                                display_job(url_box.get(), category_box.get(), location_box.get())])
     search_text.set("Search")
-    # button_search.place(relx=0.38, rely=0.75, relheight=0.2, relwidth=0.2)
     button_search.grid(row=4, column=2, sticky="NW")
+
+    back_button_pic = PhotoImage(file="pic/back.png").subsample(5, 5)
+    label_back = Label(image=back_button_pic)
+    label_back.image = back_button_pic  # keep a reference
+    button_back = tk.Button(root, highlightthickness=0, bd=0, borderwidth=0,
+                            image=back_button_pic,
+                            command=lambda: [url_label.grid_remove(), url_box.grid_remove(),
+                                             category_label.grid_remove(), category_box.grid_remove(),
+                                             button_search.grid_remove(), location_label.grid_remove(),
+                                             location_box.grid_remove(), button_back.grid_remove(), back_main_frame()])
+    button_back.grid(row=4, column=2, sticky="NE")
 
 
 def callback(url):
@@ -303,19 +387,14 @@ def display_job(url, category, location):
     company_name, skills, job_link, years, locations = ws.run()
     display_job_frame = tk.Frame(root)
     display_job_frame.grid(row=1, column=1)
-    # display_job_frame.place(relx=0.1, rely=0.05, relwidth=0.7, relheight=0.9)
-    display_link_frame = tk.Frame(root)
-    display_link_frame.grid(row=1, column=4)
 
     S = tk.Scrollbar(display_job_frame)
-    T = tk.Text(display_job_frame, height=40, width=80, font=("FONT", 22), bd=0, highlightthickness=0, wrap=WORD)
+    T = tk.Text(display_job_frame, height=40, width=80, font=("Railway", 16), bd=0, highlightthickness=0)
+    hyperlink = tkHyperlinkManager.HyperlinkManager(T)
     S.pack(side=tk.RIGHT, fill=tk.Y)
     T.pack(side=tk.LEFT, fill=tk.Y)
     S.config(command=T.yview)
     T.config(yscrollcommand=S.set)
-
-    # creates horizontal line for separeting job listings
-    horizontalLine = '\u2500' * 20
 
     for i in range(len(company_name)):
         full_text = ""
@@ -331,12 +410,19 @@ def display_job(url, category, location):
         full_text += "Location: "
         full_text += locations[i]
         full_text += "\n"
-        full_text += horizontalLine
-        full_text += "\n"
         T.insert(tk.END, full_text)
-        link_label = tk.Label(display_link_frame, fg="blue", cursor="hand2", text=company_name[i], font=(FONT, 24))
-        link_label.pack(pady=6)
-        link_label.bind("<Button-1>", lambda e: callback(job_link[i]))
+        T.insert(tk.END, "Job Details", hyperlink.add(lambda: callback(job_link[i])))
+        T.insert(tk.END, "\n")
+
+    back_button_pic = PhotoImage(file="pic/back.png").subsample(5, 5)
+    label_back = Label(image=back_button_pic)
+    label_back.image = back_button_pic  # keep a reference
+    button_back = tk.Button(root, bd=0, highlightthickness=0, borderwidth=0,
+                            image=back_button_pic,
+                            command=lambda: [display_job_frame.grid_forget(),
+                                             button_back.grid_remove(), back_main_frame()])
+    button_back.grid(row=1, column=4)
+
 
 # ---------------------------------------------------END Job Search-----------------------------------------#
 
@@ -349,10 +435,7 @@ def show_price(item_title, index):
     eaby_text = "\nEABY:        " + ebay[0] + ": " + ebay[1]
     total_text = bestbuy_text + eaby_text
 
-    # right_frame = tk.Frame(root, height=450, width=500)
-    # right_frame.grid(row=1, column=4, rowspan=4, columnspan=2)
-
-    bt = tk.Text(root, font=("FONT", 16), bd=0, highlightthickness=0)
+    bt = tk.Text(root, font=("Railway", 16), bd=0, highlightthickness=0)
     bt.insert(tk.END, total_text)
     if index == 0:
         bt.place(relx=0.3, rely=0.1, relheight=0.15, relwidth=0.7)
@@ -362,159 +445,185 @@ def show_price(item_title, index):
         bt.place(relx=0.3, rely=0.42, relheight=0.15, relwidth=0.7)
     elif index == 3:
         bt.place(relx=0.3, rely=0.6, relheight=0.15, relwidth=0.7)
-    # bt.grid(row=2, column=4, rowspan=4, columnspan=4)
 
 
 def price_tracker_gui():
     forget_main_frame()
-
-    # canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH + 200)
-    # canvas.grid()
-    # canvas.configure(highlightthickness=0, bg="black")
     for i in range(10):
         root.columnconfigure(i, weight=1)
         root.rowconfigure(i, weight=1)
 
     text_1 = tk.StringVar()
     text_1.set("Nikon Z5")
-    button_1 = tk.Button(root, textvariable=text_1, font=('FONT', 18), height=3, width=17,
-                         highlightbackground="#20bebe",
-                         fg="black", command=lambda: show_price(text_1.get(), 0))
-    button_1.grid(row=1, column=0)
+    button_tracker_1 = tk.Button(root, textvariable=text_1, font=('Railway', 18), height=3, width=17,
+                                 highlightbackground="#20bebe",
+                                 fg="black", command=lambda: show_price(text_1.get(), 0))
+    button_tracker_1.grid(row=1, column=0)
 
     text_2 = tk.StringVar()
     text_2.set("Xbox Series S(512GB)")
-    button_2 = tk.Button(root, textvariable=text_2, font=('FONT', 18), height=3, width=17,
-                         highlightbackground="#20bebe",
-                         fg="black", command=lambda: show_price(text_2.get(), 1))
-    button_2.grid(row=2, column=0)
+    button_tracker_2 = tk.Button(root, textvariable=text_2, font=('Railway', 18), height=3, width=17,
+                                 highlightbackground="#20bebe",
+                                 fg="black", command=lambda: show_price(text_2.get(), 1))
+    button_tracker_2.grid(row=2, column=0)
 
     text_3 = tk.StringVar()
     text_3.set("Ipad pro 11-inch")
-    button_3 = tk.Button(root, textvariable=text_3, font=('FONT', 18), height=3, width=17,
-                         highlightbackground="#20bebe",
-                         fg="black", command=lambda: show_price(text_3.get(), 2))
-    button_3.grid(row=3, column=0)
+    button_tracker_3 = tk.Button(root, textvariable=text_3, font=('Railway', 18), height=3, width=17,
+                                 highlightbackground="#20bebe",
+                                 fg="black", command=lambda: show_price(text_3.get(), 2))
+    button_tracker_3.grid(row=3, column=0)
 
     text_4 = tk.StringVar()
     text_4.set("AirPods(3rd gen)")
-    button_4 = tk.Button(root, textvariable=text_4, font=('FONT', 18), height=3, width=17,
-                         highlightbackground="#20bebe",
-                         fg="black", command=lambda: show_price(text_4.get(), 3))
-    button_4.grid(row=4, column=0)
+    button_tracker_4 = tk.Button(root, textvariable=text_4, font=('Railway', 18), height=3, width=17,
+                                 highlightbackground="#20bebe",
+                                 fg="black", command=lambda: show_price(text_4.get(), 3))
+    button_tracker_4.grid(row=4, column=0)
 
 
 # ---------------------------------------------------END Price Tracker-----------------------------------------#
 
-#------------------------------------------ MAIN PAGE AGAIN FOR BACK BUTTON-----------------------------------------#
-def return_main(root):
-    display_job_frame = tk.Frame(root)
-    display_job_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+# --------------- Super Awesome Richard Dictionary Function ------------- #
+def setCurrentWord(myWord, wordL):
+    wordL.config(text=myWord)
 
 
-    # frame = tk.Frame(root)
-    # frame.grid()
-    # frame.place(relx=0.45, rely=0.25, relwidth=0.75, relheight=0.8, anchor='n')
-
-    fontColor = "white"
-    bgColor = "#EBF7E3"
-    font = "Helvetica"
-
-    text_1 = tk.StringVar()
-    button_1 = tk.Button(root, textvariable=text_1, font=(font, 22, "bold"), height=6, width=20,
-                         bg="#155a69",
-                         fg=fontColor, command=lambda: download_article(button_1, button_2, button_3, button_4, display_job_frame))
-    text_1.set("Article")
-    button_1.grid(row=1, column=1)
-
-    # button_1.place(relx=0.15, rely=0, relheight=0.2, relwidth=0.35)
-    text_2 = tk.StringVar()
-    button_2 = tk.Button(root, textvariable=text_2, font=(font, 22, "bold"), height=6, width=20,
-                         bg="#2bb5d3",
-                         fg=fontColor, command=lambda: instock_alert())
-    text_2.set("In Stock Alert")
-    button_2.grid(row=1, column=2)
-    # button_2.place(relx=0.6, rely=0, relheight=0.2, relwidth=0.35)
-
-    text_3 = tk.StringVar()
-    button_3 = tk.Button(root, textvariable=text_3, font=(font, 22, "bold"), height=6, width=20,
-                         bg="#95dae9",
-                         fg="black", command=lambda: price_tracker_gui())
-    text_3.set("Price Tracker")
-    button_3.grid(row=2, column=1)
-    # button_3.place(relx=0.15, rely=0.3, relheight=0.2, relwidth=0.35)
-
-    text_4 = tk.StringVar()
-    button_4 = tk.Button(root, textvariable=text_4, font=(font, 22, "bold"), height=6, width=20,
-                         bg="black",
-                         fg=fontColor, command=lambda: search_job(button_1, button_2, button_3, button_4, display_job_frame))
-    text_4.set("Search Job")
-    button_4.grid(row=2, column=2)
-    # button_4.place(relx=0.6, rely=0.3, relheight=0.2, relwidth=0.35)
-
-    root.mainloop()
-
-#---------------------------------- END MAIN PAGE AGAIN FOR BACK BUTTON-----------------------------------------#
+def setDefinition(definition, meanM):
+    if definition == "Invalid word.":
+        meanM.config(text=definition)
+    else:
+        definition = "1. " + definition
+        meanM.config(text=definition)
 
 
-#---------------------------------- BEGIN ORIGNAL MAIN PAGE----------------------------------------#
+def setAltDefinition(myAlt, altM):
+    if myAlt == "":
+        altM.config(text="")
+    else:
+        myAlt = "2. " + myAlt
+        altM.config(text=myAlt)
 
 
+def setNote(myNote, noteM):
+    if myNote == "":
+        noteM.config(text="")
+    else:
+        myNote = "Fun Fact: " + myNote
+        noteM.config(text=myNote)
+
+
+def prevWordButton(wordL, defM, noteM, altM):
+    wordInfo = dictionary.getLastWordOTD()
+    setCurrentWord(wordInfo[0], wordL)
+    setDefinition(wordInfo[1], defM)
+    setNote(wordInfo[2], noteM)
+    setAltDefinition(wordInfo[3], altM)
+
+
+def setCurrentWordOTD(wordL, defM, noteM, altM):
+    wordInfo = dictionary.getWordOTD()
+    setCurrentWord(wordInfo[0], wordL)
+    setDefinition(wordInfo[1], defM)
+    setNote(wordInfo[2], noteM)
+    setAltDefinition(wordInfo[3], altM)
+
+
+def defineButton(myWord, wordL, defM, noteM, altM):
+    wordInfo = dictionary.definition(myWord)
+    setCurrentWord(wordInfo[0], wordL)
+    setDefinition(wordInfo[1], defM)
+    setNote("", noteM)
+    setAltDefinition(wordInfo[2], altM)
+
+
+def dictionary_gui():
+    forget_main_frame()
+
+    # set frame
+
+    mainframe = ttk.Frame(root, padding="3 3 12 12")
+    mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+    root.columnconfigure(0, weight=1)
+    root.rowconfigure(0, weight=1)
+
+    wordL = ttk.Label(mainframe, width=25, text="", font=('Railway', 36))
+    wordL.grid(column=1, row=1, sticky=W)
+
+    wordDefinition = Message(mainframe, width=800, text="", font=('Railway', 22))
+    wordDefinition.grid(column=1, row=2, sticky=W)
+
+    wordAlt = Message(mainframe, width=800, text="", font=('Railway', 22))
+    wordAlt.grid(column=1, row=3, sticky=W)
+
+    wordNote = Message(mainframe, width=800, text="", font=('Railway', 22))
+    wordNote.grid(column=1, row=4, sticky=W)
+
+    # configure buttons, creating a style for them
+    wordBox = Text(mainframe, padx=0, pady=0, height=1, width=25, font=('Railway', 22), bg="white", borderwidth=2)
+    wordBox.grid(column=1, row=6, sticky=W)
+    wordBox.insert("1.0", "Search new word")
+
+    lastWordOTD = ttk.Button(mainframe, text="Get Yesterday's Word of the Day",
+                             command=lambda: prevWordButton(wordL, wordDefinition, wordNote, wordAlt))
+    lastWordOTD.grid(column=1, row=8, sticky=W)
+
+    button_define = ttk.Button(mainframe, text="Find Definition",
+                               command=lambda: defineButton(wordBox.get("1.0", "end-1c"), wordL, wordDefinition,
+                                                            wordNote, wordAlt))
+    button_define.grid(column=1, row=7, sticky=W)
+
+    style = ttk.Style()
+    style.configure('TButton', font=('Railway', 22))
+
+    # by default, the frame has the current word of the day
+
+    setCurrentWordOTD(wordL, wordDefinition, wordNote, wordAlt)
+
+
+# ----------- End Super Awesome Richard Dictionary Function -------------- #
 root = tk.Tk()
 root.title("Web Scraper Tool Box")
-# root.configure()
 root.geometry("800x600")
-root.configure(bg='white')
-
-# canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
-# canvas.grid(columnspan=4, rowspan=4)
-# canvas.configure(highlightthickness=0)
 
 for i in range(4):
     root.columnconfigure(i, weight=1)
     root.rowconfigure(i, weight=1)
 
-#
-# frame = tk.Frame(root)
-# frame.grid()
-# frame.place(relx=0.45, rely=0.25, relwidth=0.75, relheight=0.8, anchor='n')
-
-fontColor = "white"
-bgColor = "#EBF7E3"
-font = "Helvetica"
-
-display_null = tk.Frame(root)
-
 text_1 = tk.StringVar()
-button_1 = tk.Button(root, textvariable=text_1, font=(font, 22, "bold"), height=6, width=20,
-                     bg="#155a69",
-                     fg=fontColor, command=lambda: download_article(button_1, button_2, button_3, button_4, display_null))
+button_1 = tk.Button(root, textvariable=text_1, font=('Railway', 22), height=6, width=20, highlightbackground="red",
+                     fg="white", command=lambda: download_article())
 text_1.set("Article")
 button_1.grid(row=1, column=1)
 
-# button_1.place(relx=0.15, rely=0, relheight=0.2, relwidth=0.35)
 text_2 = tk.StringVar()
-button_2 = tk.Button(root, textvariable=text_2, font=(font, 22, "bold"), height=6, width=20,
-                     bg="#2bb5d3",
-                     fg=fontColor, command=lambda: instock_alert())
+button_2 = tk.Button(root, textvariable=text_2, font=('Railway', 22), height=6, width=20, highlightbackground="purple",
+                     fg="white", command=lambda: in_stock_alert())
 text_2.set("In Stock Alert")
 button_2.grid(row=1, column=2)
-# button_2.place(relx=0.6, rely=0, relheight=0.2, relwidth=0.35)
 
 text_3 = tk.StringVar()
-button_3 = tk.Button(root, textvariable=text_3, font=(font, 22, "bold"), height=6, width=20,
-                     bg="#95dae9",
-                     fg="black", command=lambda: price_tracker_gui())
+button_3 = tk.Button(root, textvariable=text_3, font=('Railway', 22), height=6, width=20, highlightbackground="blue",
+                     fg="white", command=lambda: price_tracker_gui())
 text_3.set("Price Tracker")
 button_3.grid(row=2, column=1)
-# button_3.place(relx=0.15, rely=0.3, relheight=0.2, relwidth=0.35)
 
 text_4 = tk.StringVar()
-button_4 = tk.Button(root, textvariable=text_4, font=(font, 22, "bold"), height=6, width=20,
-                     bg="black",
-                     fg=fontColor, command=lambda: search_job(button_1, button_2, button_3, button_4, display_null))
+button_4 = tk.Button(root, textvariable=text_4, font=('Railway', 22), height=6, width=20, highlightbackground="orange",
+                     fg="white", command=lambda: search_job())
 text_4.set("Search Job")
 button_4.grid(row=2, column=2)
-# button_4.place(relx=0.6, rely=0.3, relheight=0.2, relwidth=0.35)
+
+text_5 = tk.StringVar()
+button_5 = tk.Button(root, textvariable=text_5, font=('Railway', 22), height=6, width=20, highlightbackground="green",
+                     fg="white", command=lambda: dictionary_gui())
+text_5.set("Online Dictionary")
+button_5.grid(row=3, column=1)
+
+text_6 = tk.StringVar()
+button_6 = tk.Button(root, textvariable=text_6, font=('Railway', 22), height=6, width=20, highlightbackground="Magenta",
+                     fg="white")
+text_6.set("Leave Blank")
+button_6.grid(row=3, column=2)
 
 root.mainloop()
